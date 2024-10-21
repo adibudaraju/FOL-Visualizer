@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First-Order Logic Proof Visualization</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: #333;
+        }
+
+        h1 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            color: #fff;
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        form {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 400px;
+        }
+
+        label {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            font-size: 1rem;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #74ebd5;
+            background: -webkit-linear-gradient(to right, #74ebd5, #ACB6E5);
+            background: linear-gradient(to right, #74ebd5, #ACB6E5);
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: -webkit-linear-gradient(to right, #ACB6E5, #74ebd5);
+            background: linear-gradient(to right, #ACB6E5, #74ebd5);
+        }
+
+        #visualization {
+            margin-top: 40px;
+            width: 60%;
+            text-align: center;
+        }
+
+        .result-box {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .result-box p {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .result-valid {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .result-invalid {
+            color: #dc3545;
+            font-weight: 500;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .step-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            width: 30%;
+            transition: transform 0.3s;
+        }
+
+        .step-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .step-card p {
+            font-size: 1rem;
+            margin: 0;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Logic Proof Visualizer</h1>
+
+    <form id="proofForm">
+        <label for="statement">Enter your logic statement:</label>
+        <input type="text" id="statement" name="statement" placeholder="e.g., A -> (B ∧ C)" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="visualization"></div>
+
+    <script>
+        document.getElementById('proofForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            let statement = document.getElementById('statement').value;
+
+            fetch('/proof', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ statement: statement }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    let visualizationDiv = document.getElementById('visualization');
+                    visualizationDiv.innerHTML = '';
+
+                    let resultBox = document.createElement('div');
+                    resultBox.classList.add('result-box');
+                    let validityText = data.valid ? 'Valid' : 'Invalid';
+                    resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">Proof is ${validityText}</p>`;
+                    visualizationDiv.appendChild(resultBox);
+
+                    let stepsContainer = document.createElement('div');
+                    stepsContainer.classList.add('steps');
+
+                    data.steps.forEach(step => {
+                        let stepCard = document.createElement('div');
+                        stepCard.classList.add('step-card');
+                        stepCard.innerHTML = `<p>${step}</p>`;
+                        stepsContainer.appendChild(stepCard);
+                    });
+
+                    visualizationDiv.appendChild(stepsContainer);
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+
+</html>
