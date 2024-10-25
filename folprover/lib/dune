@@ -1,0 +1,7 @@
+(library
+ (name folprover))
+
+(menhir
+ (modules parser))
+
+(ocamllex lexer)
