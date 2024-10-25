@@ -14,7 +14,10 @@ type t =
   | Qf of quantifier * var * t
   | Rel of relName * tm list
 
-exception InvalidForm
+type literal = bool * relName * tm list
+type clause = literal list
+
+exception InvalidForm of string
 
 let rec nnf = function
   | Cv (c, f1, f2) -> Cv (c, nnf f1, nnf f2)
@@ -50,7 +53,9 @@ let subst x t =
 let rec pnf = function
   | Rel (p, ts) -> Rel (p, ts)
   | Not f -> (
-      match f with Rel (p, ts) -> Not (Rel (p, ts)) | _ -> raise InvalidForm)
+      match f with
+      | Rel (p, ts) -> Not (Rel (p, ts))
+      | _ -> raise (InvalidForm "expected nnf in pnf"))
   | Qf (q, x, f) -> Qf (q, x, pnf f)
   | Cv (c, f1, f2) -> (
       match (pnf f1, pnf f2) with
@@ -74,7 +79,9 @@ let skolemize =
 let rec cnf = function
   | Rel (p, ts) -> Rel (p, ts)
   | Not f -> (
-      match f with Rel (p, ts) -> Not (Rel (p, ts)) | _ -> raise InvalidForm)
+      match f with
+      | Rel (p, ts) -> Not (Rel (p, ts))
+      | _ -> raise (InvalidForm "expected nnf in cnf"))
   | Qf (q, x, f) -> Qf (q, x, cnf f)
   | Cv (And, f1, f2) -> Cv (And, cnf f1, cnf f2)
   | Cv (Or, f1, f2) -> (
@@ -124,3 +131,33 @@ let rec print = function
       print_string ", ";
       print f;
       print_string ")"
+
+let rec disj_clause cl = function
+  | Rel (p, ts) -> (true, p, ts) :: cl
+  | Not (Rel (p, ts)) -> (false, p, ts) :: cl
+  | Cv (Or, f1, f2) -> disj_clause (disj_clause cl f1) f2
+  | _ -> raise (InvalidForm "expected cnf in disj_clause")
+
+let rec conj_clauses xs cls = function
+  | Qf (Forall, x, f) -> conj_clauses (x :: xs) cls f
+  | Cv (And, f1, f2) -> conj_clauses xs (conj_clauses xs cls f1) f2
+  | f ->
+      let f = List.fold_left (fun f x -> subst x (Var (freshVar x)) f) f xs in
+      disj_clause [] f :: cls
+
+let clausal_form : t -> clause list = conj_clauses [] []
+
+let print_literal ((b, p, ts) : literal) =
+  if not b then print_string "~";
+  print_string p;
+  print_string "(";
+  print_tms ts
+
+let rec print_clause (c : clause) =
+  match c with
+  | [] -> ()
+  | [ l ] -> print_literal l
+  | l :: c ->
+      print_literal l;
+      print_string " || ";
+      print_clause c

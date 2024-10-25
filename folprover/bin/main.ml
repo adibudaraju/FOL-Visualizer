@@ -17,4 +17,10 @@ let () =
   print_newline ();
   let cnf = Fol.cnf skm in
   Fol.print cnf;
-  print_newline ()
+  print_newline ();
+  let cls = Fol.clausal_form cnf in
+  List.iter
+    (fun c ->
+      Fol.print_clause c;
+      print_string ";\n")
+    cls
