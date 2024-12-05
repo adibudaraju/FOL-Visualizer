@@ -229,6 +229,11 @@ let rec print_substs (c : substMap) =
       print_string ",";
       print_substs c'
 
+let shuffle l =
+  l
+  |> List.map (fun x -> (Random.bits (), x))
+  |> List.sort compare |> List.map snd
+
 type stepResult = { c : clause; l1 : literal; l2 : literal; m : substMap }
 
 let factor (co : clause) : stepResult option =
@@ -294,9 +299,9 @@ let resolve (co1 : clause) (co2 : clause) : stepResult option =
                       }
               else loop2 d'
         in
-        match loop2 co2 with None -> loop1 c' | Some r -> Some r)
+        match loop2 (shuffle co2) with None -> loop1 c' | Some r -> Some r)
   in
-  loop1 co1
+  loop1 (shuffle co1)
 
 let search_resolve (cs : clause list) : (clause * clause * stepResult) option =
   let rec loop1 = function
@@ -309,9 +314,9 @@ let search_resolve (cs : clause list) : (clause * clause * stepResult) option =
               | None -> loop2 ds'
               | Some r -> if List.mem r.c cs then loop2 ds' else Some (c, d, r))
         in
-        match loop2 cs' with None -> loop1 cs' | Some r -> Some r)
+        match loop2 (shuffle cs') with None -> loop1 cs' | Some r -> Some r)
   in
-  loop1 cs
+  loop1 (shuffle cs)
 
 let print_factor (c : clause) (f : stepResult) =
   print_string "Factor;";
