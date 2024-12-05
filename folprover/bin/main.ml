@@ -5,6 +5,8 @@ let allclauses = ref []
 let () =
   let lexbuf = Lexing.from_string Sys.argv.(1) in
   let f = Parser.goal Lexer.token lexbuf in
+  Fol.print f;
+  print_newline ();
   let neg = Fol.Not f in
   Fol.print neg;
   print_newline ();
@@ -32,7 +34,8 @@ let () =
     | Some (c1, c2, r) ->
         Fol.print_resolve c1 c2 r;
         print_newline ();
-        if r.c = [] then print_endline "Found a contradiction! Original formula is valid."
+        if r.c = [] then
+          print_endline "Found a contradiction! Original formula is valid."
         else (
           allclauses := r.c :: !allclauses;
           step ())
@@ -43,6 +46,7 @@ let () =
             print_newline ();
             allclauses := r.c :: !allclauses;
             step ()
-        | None -> print_endline "Cannot take a step! Original formula is invalid.")
+        | None ->
+            print_endline "Cannot take a step! Original formula is invalid.")
   in
   step ()
