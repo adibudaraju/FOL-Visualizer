@@ -168,7 +168,7 @@ let ( let* ) = Option.bind
 let rec unify_tm (c : substMap) t1 t2 : substMap option =
   match (t1, t2) with
   | Var x, Var y -> (
-      if x = y then None
+      if x = y then Some c
       else
         match (List.assoc_opt x c, List.assoc_opt y c) with
         | Some t1', Some t2' -> unify_tm c t1' t2'
