@@ -203,7 +203,7 @@ let rec print_substs (c : substMap) =
   | [] -> print_string "no substs"
   | [ (x, t) ] ->
       print_string x;
-      print_string "|->";
+      print_string " -> ";
       print_tm t
   | (x, t) :: c' ->
       print_string x;
@@ -297,27 +297,27 @@ let search_resolve (cs : clause list) : (clause * clause * stepResult) option =
   loop1 cs
 
 let print_factor (c : clause) (f : stepResult) =
-  print_string "Factoring: ";
+  print_string "Factor;";
   print_clause c;
-  print_string " | ";
+  print_string ";";
   print_literal f.l1;
-  print_string " and ";
+  print_string ";";
   print_literal f.l2;
-  print_string " unify with ";
+  print_string ";";
   print_substs f.m;
-  print_string " to ";
+  print_string ";";
   print_clause f.c
 
 let print_resolve (c1 : clause) (c2 : clause) (f : stepResult) =
-  print_string "Resolving: ";
+  print_string "Resolve;";
   print_clause c1;
-  print_string " | ";
+  print_string ";";
   print_clause c2;
-  print_string " | ";
+  print_string ";";
   print_literal f.l1;
-  print_string " and ";
+  print_string ";";
   print_literal f.l2;
-  print_string " unify with ";
+  print_string ";";
   print_substs f.m;
-  print_string " to ";
+  print_string ";";
   print_clause f.c
