@@ -235,6 +235,20 @@
                 let unify = data.unify;
                 let initial_kb = data.initial_kb; // Initial knowledge base
                 let kb = data.kb; // List of knowledge bases at each step
+                let error = data.error; // Error flag
+
+                // Handle error case
+                if (error) {
+                    // Show error message in preprocessing section
+                    let errorMessage = document.createElement('div');
+                    errorMessage.classList.add('error-message');
+                    errorMessage.textContent = "An error occurred while processing your logic statement.";
+                    stepsContainer.appendChild(errorMessage);
+
+                    // Hide the knowledge base and resolution sections
+                    kbAndResolutionContainer.style.display = 'none';
+                    return; // Don't proceed further if there's an error
+                }
 
                 // Show Preprocessing Steps
                 let header = document.createElement('div');
@@ -306,17 +320,17 @@
                     } else {
                         nextStepButton.disabled = true;
                         nextStepButton.textContent = 'No more steps';
+
+                        // Once all steps are shown, display result box
+                        let resultBox = document.createElement('div');
+                        resultBox.classList.add('result-box');
+                        let validityText = data.valid ? 'Valid' : 'Not Valid';
+                        resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">Statement is ${validityText}</p>`;
+                        document.getElementById('visualization').appendChild(resultBox);
                     }
                 });
 
                 resolutionContainer.appendChild(nextStepButton);
-
-                // Display result box
-                let resultBox = document.createElement('div');
-                resultBox.classList.add('result-box');
-                let validityText = data.valid ? 'Valid' : 'Not Valid';
-                resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">Statement is ${validityText}</p>`;
-                document.getElementById('visualization').appendChild(resultBox);
 
             })
             .catch(error => console.error('Error:', error));
