@@ -1,144 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>First-Order Logic Proof Visualization</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
-
+    
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #74ebd5, #ACB6E5);
-            height: 100vh;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+            padding: 20px;
             color: #333;
+            overflow-y: auto;
         }
 
         h1 {
             font-family: 'Roboto', sans-serif;
             font-weight: 500;
             color: #fff;
-            font-size: 3rem;
-            margin-bottom: 20px;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
         }
 
         form {
             background: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 400px;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         label {
             font-size: 1.2rem;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         input[type="text"] {
             font-size: 1rem;
-            padding: 10px;
+            padding: 12px;
             width: 100%;
             margin-bottom: 20px;
             border: 2px solid #ddd;
-            border-radius: 5px;
+            border-radius: 8px;
         }
 
         button {
-            background: #74ebd5;
-            background: -webkit-linear-gradient(to right, #74ebd5, #ACB6E5);
             background: linear-gradient(to right, #74ebd5, #ACB6E5);
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 1.2rem;
             color: white;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             transition: background 0.3s ease;
+            width: 100%;
         }
 
         button:hover {
-            background: -webkit-linear-gradient(to right, #ACB6E5, #74ebd5);
             background: linear-gradient(to right, #ACB6E5, #74ebd5);
         }
 
-        #visualization {
+        #stepsContainer {
             margin-top: 40px;
-            width: 60%;
-            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .step {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .step-expression {
+            font-size: 1.5rem;
+            font-weight: bold;
         }
 
         .result-box {
             background: #ffffff;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             font-size: 1.2rem;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .result-box p {
-            margin: 0;
-            font-size: 1.2rem;
+            margin-top: 30px;
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: center;
         }
 
         .result-valid {
             color: #28a745;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .result-invalid {
             color: #dc3545;
-            font-weight: 500;
+            font-weight: 600;
         }
 
-        .steps {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .step-expression {
+                font-size: 1.2rem;
+            }
         }
 
-        .step-card {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-            width: 30%;
-            transition: transform 0.3s;
-        }
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
 
-        .step-card:hover {
-            transform: translateY(-10px);
-        }
-
-        .step-card p {
-            font-size: 1rem;
-            margin: 0;
-            text-align: center;
+            .step-expression {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
-
 <body>
     <h1>Logic Proof Visualizer</h1>
 
     <form id="proofForm">
         <label for="statement">Enter your logic statement:</label>
-        <input type="text" id="statement" name="statement" placeholder="e.g., A -> (B ∧ C)" required>
+        <input type="text" id="statement" name="statement" placeholder="e.g., A() -> B()" required>
         <button type="submit">Submit</button>
     </form>
 
+    <div id="stepsContainer"></div>
     <div id="visualization"></div>
 
     <script>
@@ -153,32 +159,41 @@
                 },
                 body: JSON.stringify({ statement: statement }),
             })
-                .then(response => response.json())
-                .then(data => {
-                    let visualizationDiv = document.getElementById('visualization');
-                    visualizationDiv.innerHTML = '';
+            .then(response => response.json())
+            .then(data => {
+                let stepsContainer = document.getElementById('stepsContainer');
+                stepsContainer.innerHTML = ''; // Clear previous steps
 
-                    let resultBox = document.createElement('div');
-                    resultBox.classList.add('result-box');
-                    let validityText = data.valid ? 'Valid' : 'Invalid';
-                    resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">Proof is ${validityText}</p>`;
-                    visualizationDiv.appendChild(resultBox);
+                let steps = data.steps;
 
-                    let stepsContainer = document.createElement('div');
-                    stepsContainer.classList.add('steps');
+                // Iterate over the steps and dynamically create step elements
+                steps.forEach((step, index) => {
+                    let stepElement = document.createElement('div');
+                    stepElement.classList.add('step');
 
-                    data.steps.forEach(step => {
-                        let stepCard = document.createElement('div');
-                        stepCard.classList.add('step-card');
-                        stepCard.innerHTML = `<p>${step}</p>`;
-                        stepsContainer.appendChild(stepCard);
-                    });
+                    let stepNumber = document.createElement('div');
+                    stepNumber.classList.add('step-number');
+                    stepNumber.textContent = `Step ${index + 1}:`;
 
-                    visualizationDiv.appendChild(stepsContainer);
-                })
-                .catch(error => console.error('Error:', error));
+                    let stepExpression = document.createElement('div');
+                    stepExpression.classList.add('step-expression');
+                    stepExpression.textContent = step; // Here, step is a string from the backend
+
+                    stepElement.appendChild(stepNumber);
+                    stepElement.appendChild(stepExpression);
+
+                    stepsContainer.appendChild(stepElement);
+                });
+
+                // Display result box at the bottom after the steps
+                let resultBox = document.createElement('div');
+                resultBox.classList.add('result-box');
+                let validityText = data.valid ? 'Valid' : 'Not Valid';
+                resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">Statement is ${validityText}</p>`;
+                document.getElementById('visualization').appendChild(resultBox);
+            })
+            .catch(error => console.error('Error:', error));
         });
     </script>
 </body>
-
 </html>
