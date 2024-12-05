@@ -33,8 +33,9 @@ let () =
         Fol.print_resolve c1 c2 r;
         print_newline ();
         if r.c = [] then print_endline "Found a contradiction!"
-        else allclauses := r.c :: !allclauses;
-        step ()
+        else (
+          allclauses := r.c :: !allclauses;
+          step ())
     | None -> (
         match Fol.search_factor !allclauses with
         | Some (c, r) ->
