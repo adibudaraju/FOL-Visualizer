@@ -1,5 +1,6 @@
 (library
- (name folprover))
+ (name folprover)
+ (modes byte native))
 
 (menhir
  (modules parser))

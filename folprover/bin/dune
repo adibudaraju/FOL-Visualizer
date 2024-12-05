@@ -1,4 +1,5 @@
 (executable
  (public_name folprover)
  (name main)
+ (modes byte exe)
  (libraries folprover))

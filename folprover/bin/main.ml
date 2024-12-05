@@ -30,22 +30,22 @@ let () =
     cls;
   allclauses := cls;
   let rec step () =
-    match Fol.search_resolve !allclauses with
-    | Some (c1, c2, r) ->
-        Fol.print_resolve c1 c2 r;
+    match Fol.search_factor !allclauses with
+    | Some (c, r) ->
+        Fol.print_factor c r;
         print_newline ();
-        if r.c = [] then
-          print_endline "Found a contradiction! Original formula is valid."
-        else (
-          allclauses := r.c :: !allclauses;
-          step ())
-    | None -> (
-        match Fol.search_factor !allclauses with
-        | Some (c, r) ->
-            Fol.print_factor c r;
+        allclauses := r.c :: !allclauses;
+        step ()
+    | _ -> (
+        match Fol.search_resolve !allclauses with
+        | Some (c1, c2, r) ->
+            Fol.print_resolve c1 c2 r;
             print_newline ();
-            allclauses := r.c :: !allclauses;
-            step ()
+            if r.c = [] then
+              print_endline "Found a contradiction! Original formula is valid."
+            else (
+              allclauses := r.c :: !allclauses;
+              step ())
         | None ->
             print_endline "Cannot take a step! Original formula is invalid.")
   in
