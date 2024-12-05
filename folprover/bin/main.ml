@@ -22,5 +22,5 @@ let () =
   List.iter
     (fun c ->
       Fol.print_clause c;
-      print_string ";\n")
+      print_string "; ")
     cls
