@@ -207,7 +207,7 @@ let rec print_substs (c : substMap) =
       print_tm t
   | (x, t) :: c' ->
       print_string x;
-      print_string "|->";
+      print_string " -> ";
       print_tm t;
       print_string ",";
       print_substs c'
