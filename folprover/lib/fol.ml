@@ -1,6 +1,6 @@
 type funName = string
 type relName = string
-type var = string
+type var = string * int
 type term = Var of var | Fun of funName * term list
 type connective = And | Or
 type quantifier = Forall | Exists
@@ -32,10 +32,12 @@ let rec nnf = function
 
 let counter = ref 0
 
-let freshVar x =
-  let x' = x ^ string_of_int !counter in
+let freshVar ((x, _) : var) : var =
+  let v' = (x, !counter) in
   incr counter;
-  x'
+  v'
+
+let string_of_var ((x, n) : var) = if n = 0 then x else x ^ string_of_int n
 
 let rec substT x t = function
   | Var y -> if x = y then t else Var y
@@ -48,6 +50,18 @@ let rec subst x t = function
   | Rel (p, ts) -> Rel (p, List.map (substT x t) ts)
 
 let substL x t l = { l with tms = List.map (substT x t) l.tms }
+let substC x t c = List.map (substL x t) c
+let uniq = List.fold_left (fun u x -> if List.mem x u then u else x :: u) []
+
+let rec freevarsT = function
+  | Var x -> [ x ]
+  | Fun (_, ts) -> List.concat_map freevarsT ts |> uniq
+
+let freevarsL l = List.concat_map freevarsT l.tms |> uniq
+let freevarsC (c : clause) = List.concat_map freevarsL c |> uniq
+
+let fresh_clause (c : clause) =
+  List.fold_left (fun c x -> substC x (Var (freshVar x)) c) c (freevarsC c)
 
 let rec pnf = function
   | Rel (p, ts) -> Rel (p, ts)
@@ -70,7 +84,8 @@ let skolemize =
   let rec skolemize' xs f =
     match f with
     | Qf (Forall, x, f') -> Qf (Forall, x, skolemize' (Var x :: xs) f')
-    | Qf (Exists, x, f') -> skolemize' xs (subst x (Fun (x ^ "_sk", xs)) f')
+    | Qf (Exists, x, f') ->
+        skolemize' xs (subst x (Fun (string_of_var x ^ "_sk", xs)) f')
     | _ -> f
   in
   skolemize' []
@@ -103,7 +118,7 @@ let rec print_tms ts =
       print_tms ts
 
 and print_tm = function
-  | Var x -> print_string x
+  | Var x -> print_string (string_of_var x)
   | Fun (f, ts) ->
       print_string f;
       print_string "(";
@@ -126,7 +141,7 @@ let rec print = function
   | Qf (q, x, f) ->
       print_string "(";
       print_string (match q with Forall -> "forall " | Exists -> "exists ");
-      print_string x;
+      print_string (string_of_var x);
       print_string ", ";
       print f;
       print_string ")"
@@ -137,14 +152,12 @@ let rec disj_clause cl = function
   | Cv (Or, f1, f2) -> disj_clause (disj_clause cl f1) f2
   | _ -> raise (InvalidForm "expected cnf in disj_clause")
 
-let rec conj_clauses xs cls = function
-  | Qf (Forall, x, f) -> conj_clauses (x :: xs) cls f
-  | Cv (And, f1, f2) -> conj_clauses xs (conj_clauses xs cls f1) f2
-  | f ->
-      let f = List.fold_left (fun f x -> subst x (Var (freshVar x)) f) f xs in
-      disj_clause [] f :: cls
+let rec conj_clauses cls = function
+  | Qf (Forall, _, f) -> conj_clauses cls f
+  | Cv (And, f1, f2) -> conj_clauses (conj_clauses cls f1) f2
+  | f -> fresh_clause (disj_clause [] f) :: cls
 
-let clausal_form : formula -> clause list = conj_clauses [] []
+let clausal_form : formula -> clause list = conj_clauses []
 
 let print_literal (l : literal) =
   if not l.b then print_string "~";
@@ -178,7 +191,9 @@ let rec unify_tm (c : substMap) t1 t2 : substMap option =
   | Var x, Fun (f, ts) | Fun (f, ts), Var x -> (
       match List.assoc_opt x c with
       | Some t' -> unify_tm c (Fun (f, ts)) t'
-      | None -> Some ((x, Fun (f, ts)) :: c))
+      | None ->
+          if List.mem x (freevarsT (Fun (f, ts))) then None
+          else Some ((x, Fun (f, ts)) :: c))
   | Fun (f1, ts1), Fun (f2, ts2) ->
       if f1 <> f2 then None
       else
@@ -204,11 +219,11 @@ let rec print_substs (c : substMap) =
   match c with
   | [] -> print_string "NONE"
   | [ (x, t) ] ->
-      print_string x;
+      print_string (string_of_var x);
       print_string " -> ";
       print_tm t
   | (x, t) :: c' ->
-      print_string x;
+      print_string (string_of_var x);
       print_string " -> ";
       print_tm t;
       print_string ",";

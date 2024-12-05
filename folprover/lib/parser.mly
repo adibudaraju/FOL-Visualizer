@@ -25,13 +25,13 @@ formula:
 | formula OR formula {Cv (Or, $1, $3)}
 | formula AND formula {Cv (And, $1, $3)}
 | NOT formula {Not $2}
-| FORALL ID COMMA formula %prec FORALL {Qf (Forall, $2, $4)}
-| EXISTS ID COMMA formula %prec EXISTS {Qf (Exists, $2, $4)}
+| FORALL ID COMMA formula %prec FORALL {Qf (Forall, ($2,0), $4)}
+| EXISTS ID COMMA formula %prec EXISTS {Qf (Exists, ($2,0), $4)}
 | ID LPAREN separated_list(COMMA, term) RPAREN {Rel ($1, $3)}
 | LPAREN formula RPAREN {$2}
 ;
 
 term:
-| ID {Var $1}
+| ID {Var ($1, 0)}
 | ID LPAREN separated_list(COMMA, term) RPAREN {Fun ($1, $3)}
 ;
