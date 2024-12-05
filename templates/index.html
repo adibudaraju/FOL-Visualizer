@@ -22,7 +22,7 @@
             font-weight: 500;
             color: #fff;
             font-size: 2.5rem;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-align: center;
         }
 
@@ -69,12 +69,51 @@
             background: linear-gradient(to right, #ACB6E5, #74ebd5);
         }
 
-        #stepsContainer {
+        /* Main Layout */
+        #mainContent {
             margin-top: 40px;
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
+        }
+
+        /* Preprocessing steps container */
+        #stepsContainer {
+            margin-top: 30px;
+        }
+
+        /* Container for KB and Resolution sections */
+        .container {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* Knowledge Base Section */
+        #kbContainer {
+            width: 45%;
             padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            font-size: 1.2rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .kb-item {
+            margin-bottom: 15px;
+        }
+
+        .kb-item.new {
+            color: #e74c3c; /* New KB items in red */
+        }
+
+        /* Resolution Section */
+        #resolutionContainer {
+            width: 45%;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
         }
 
         .step {
@@ -82,16 +121,31 @@
             margin-bottom: 20px;
         }
 
-        .step-number {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
         .step-expression {
             font-size: 1.5rem;
             font-weight: bold;
         }
 
+        .next-step-button {
+            background-color: #f39c12;
+            color: white;
+            font-size: 1rem;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: auto;
+            margin-bottom: 20px;
+            display: block;
+            text-align: center;
+            margin: 10px auto;
+        }
+
+        .next-step-button:hover {
+            background-color: #e67e22;
+        }
+
+        /* Result Box */
         .result-box {
             background: #ffffff;
             padding: 20px;
@@ -115,27 +169,21 @@
         }
 
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
+            /* Stack everything vertically on smaller screens */
+            .container {
+                flex-direction: column;
+                align-items: center;
             }
 
-            .step-expression {
-                font-size: 1.2rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            .step-expression {
-                font-size: 1rem;
+            #kbContainer, #resolutionContainer {
+                width: 90%;
+                margin-bottom: 20px;
             }
         }
     </style>
 </head>
 <body>
+
     <h1>Logic Proof Visualizer</h1>
 
     <form id="proofForm">
@@ -144,13 +192,25 @@
         <button type="submit">Submit</button>
     </form>
 
-    <div id="stepsContainer"></div>
+    <div id="mainContent">
+        <div id="stepsContainer"></div>
+
+        <!-- Knowledge Base and Resolution sections will be added dynamically -->
+        <div class="container" style="display:none;" id="kbAndResolutionContainer">
+            <div id="kbContainer"></div>
+            <div id="resolutionContainer"></div>
+        </div>
+    </div>
+
     <div id="visualization"></div>
 
     <script>
         document.getElementById('proofForm').addEventListener('submit', function (e) {
             e.preventDefault();
             let statement = document.getElementById('statement').value;
+
+            // Hide the form to prevent multiple submissions
+            document.getElementById('proofForm').style.display = 'none';
 
             fetch('/proof', {
                 method: 'POST',
@@ -161,36 +221,117 @@
             })
             .then(response => response.json())
             .then(data => {
+                // Clear previous content if any
                 let stepsContainer = document.getElementById('stepsContainer');
-                stepsContainer.innerHTML = ''; // Clear previous steps
+                let kbContainer = document.getElementById('kbContainer');
+                let resolutionContainer = document.getElementById('resolutionContainer');
+                let kbAndResolutionContainer = document.getElementById('kbAndResolutionContainer');
+                let nextStepButton = document.createElement('button');
+                nextStepButton.classList.add('next-step-button');
+                nextStepButton.textContent = 'Show Next Step';
 
                 let steps = data.steps;
+                let descriptions = data.descriptions;
+                let unify = data.unify;
+                let initial_kb = data.initial_kb; // Initial knowledge base
+                let kb = data.kb; // List of knowledge bases at each step
+                let error = data.error; // Error flag
 
-                // Iterate over the steps and dynamically create step elements
+                // Handle error case
+                if (error) {
+                    // Show error message in preprocessing section
+                    let errorMessage = document.createElement('div');
+                    errorMessage.classList.add('error-message');
+                    errorMessage.textContent = "An error occurred while processing your logic statement.";
+                    stepsContainer.appendChild(errorMessage);
+
+                    // Hide the knowledge base and resolution sections
+                    kbAndResolutionContainer.style.display = 'none';
+                    return; // Don't proceed further if there's an error
+                }
+
+                // Show Preprocessing Steps
+                let header = document.createElement('div');
+                header.classList.add('preprocessing-header');
+                header.textContent = 'Preprocessing';
+                header.style.fontSize = '2em'; 
+                header.style.fontWeight = 'bold';
+                header.style.marginBottom = '20px';
+                stepsContainer.appendChild(header);
+
                 steps.forEach((step, index) => {
                     let stepElement = document.createElement('div');
                     stepElement.classList.add('step');
 
-                    let stepNumber = document.createElement('div');
-                    stepNumber.classList.add('step-number');
-                    stepNumber.textContent = `Step ${index + 1}:`;
+                    let stepDescription = document.createElement('div');
+                    stepDescription.classList.add('step-description');
+                    stepDescription.textContent = descriptions[index];
 
                     let stepExpression = document.createElement('div');
                     stepExpression.classList.add('step-expression');
-                    stepExpression.textContent = step; // Here, step is a string from the backend
+                    stepExpression.textContent = step;
 
-                    stepElement.appendChild(stepNumber);
+                    stepElement.appendChild(stepDescription);
                     stepElement.appendChild(stepExpression);
 
                     stepsContainer.appendChild(stepElement);
                 });
 
-                // Display result box at the bottom after the steps
-                let resultBox = document.createElement('div');
-                resultBox.classList.add('result-box');
-                let validityText = data.valid ? 'Valid' : 'Not Valid';
-                resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">Statement is ${validityText}</p>`;
-                document.getElementById('visualization').appendChild(resultBox);
+                // Once preprocessing is done, show KB and Resolution containers
+                kbAndResolutionContainer.style.display = 'flex'; // Make KB and Resolution visible
+
+                // Initial Knowledge Base Section
+                initial_kb.forEach(item => {
+                    let kbItem = document.createElement('div');
+                    kbItem.classList.add('kb-item');
+                    kbItem.textContent = item;
+                    kbContainer.appendChild(kbItem);
+                });
+
+                // Resolution Section
+                let resolutionHeader = document.createElement('div');
+                resolutionHeader.classList.add('preprocessing-header');
+                resolutionHeader.textContent = 'Resolution';
+                resolutionHeader.style.fontSize = '2em';
+                resolutionHeader.style.fontWeight = 'bold';
+                resolutionHeader.style.marginBottom = '20px';
+                resolutionContainer.appendChild(resolutionHeader);
+
+                let currentStepIndex = 0;
+
+                nextStepButton.addEventListener('click', function() {
+                    if (currentStepIndex < unify.length) {
+                        // Add resolution step
+                        let stepElement = document.createElement('div');
+                        stepElement.classList.add('step');
+                        let stepExpression = document.createElement('div');
+                        stepExpression.classList.add('step-expression');
+                        stepExpression.textContent = unify[currentStepIndex];
+                        stepElement.appendChild(stepExpression);
+                        resolutionContainer.appendChild(stepElement);
+
+                        // Update Knowledge Base
+                        let kbItem = document.createElement('div');
+                        kbItem.classList.add('kb-item', 'new');
+                        kbItem.textContent = kb[currentStepIndex];
+                        kbContainer.appendChild(kbItem);
+
+                        currentStepIndex++;
+                    } else {
+                        nextStepButton.disabled = true;
+                        nextStepButton.textContent = 'No more steps';
+
+                        // Once all steps are shown, display result box
+                        let resultBox = document.createElement('div');
+                        resultBox.classList.add('result-box');
+                        let validityText = data.valid ? 'Valid' : 'Not Valid';
+                        resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">Statement is ${validityText}</p>`;
+                        document.getElementById('visualization').appendChild(resultBox);
+                    }
+                });
+
+                resolutionContainer.appendChild(nextStepButton);
+
             })
             .catch(error => console.error('Error:', error));
         });

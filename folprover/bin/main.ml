@@ -26,8 +26,9 @@ let () =
   List.iter
     (fun c ->
       Fol.print_clause c;
-      print_string ";\n")
+      print_string "; ")
     cls;
+  print_newline ();
   allclauses := cls;
   let rec step () =
     match Fol.search_factor !allclauses with
