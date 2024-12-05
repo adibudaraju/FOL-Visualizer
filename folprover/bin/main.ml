@@ -32,7 +32,7 @@ let () =
     | Some (c1, c2, r) ->
         Fol.print_resolve c1 c2 r;
         print_newline ();
-        if r.c = [] then print_endline "Found a contradiction!"
+        if r.c = [] then print_endline "Found a contradiction! Original formula is valid."
         else (
           allclauses := r.c :: !allclauses;
           step ())
@@ -43,6 +43,6 @@ let () =
             print_newline ();
             allclauses := r.c :: !allclauses;
             step ()
-        | None -> print_endline "Cannot take a step!")
+        | None -> print_endline "Cannot take a step! Original formula is invalid.")
   in
   step ()
