@@ -12,7 +12,7 @@ open Fol
 %left AND
 %nonassoc NOT
 
-%start <Fol.t> goal
+%start <Fol.formula> goal
 
 %%
 

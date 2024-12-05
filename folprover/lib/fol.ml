@@ -1,20 +1,20 @@
 type funName = string
 type relName = string
 type var = string
-type tm = Var of var | Fun of funName * tm list
+type term = Var of var | Fun of funName * term list
 type connective = And | Or
 type quantifier = Forall | Exists
 
 let negCv = function And -> Or | Or -> And
 let negQf = function Forall -> Exists | Exists -> Forall
 
-type t =
-  | Cv of connective * t * t
-  | Not of t
-  | Qf of quantifier * var * t
-  | Rel of relName * tm list
+type formula =
+  | Rel of relName * term list
+  | Not of formula
+  | Cv of connective * formula * formula
+  | Qf of quantifier * var * formula
 
-type literal = bool * relName * tm list
+type literal = bool * relName * term list
 type clause = literal list
 
 exception InvalidForm of string
@@ -145,7 +145,7 @@ let rec conj_clauses xs cls = function
       let f = List.fold_left (fun f x -> subst x (Var (freshVar x)) f) f xs in
       disj_clause [] f :: cls
 
-let clausal_form : t -> clause list = conj_clauses [] []
+let clausal_form : formula -> clause list = conj_clauses [] []
 
 let print_literal ((b, p, ts) : literal) =
   if not b then print_string "~";
