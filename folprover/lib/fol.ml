@@ -200,7 +200,7 @@ let applySubsts (m : substMap) (l : literal) =
 
 let rec print_substs (c : substMap) =
   match c with
-  | [] -> ()
+  | [] -> print_string "no substs"
   | [ (x, t) ] ->
       print_string x;
       print_string "|->";
