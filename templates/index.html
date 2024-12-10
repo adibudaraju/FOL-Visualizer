@@ -69,17 +69,14 @@
             background: linear-gradient(to right, #ACB6E5, #74ebd5);
         }
 
-        /* Main Layout */
         #mainContent {
             margin-top: 40px;
         }
 
-        /* Preprocessing steps container */
         #stepsContainer {
             margin-top: 30px;
         }
 
-        /* Container for KB and Resolution sections */
         .container {
             display: flex;
             justify-content: space-between;
@@ -87,7 +84,6 @@
             margin-top: 30px;
         }
 
-        /* Knowledge Base Section */
         #kbContainer {
             width: 45%;
             padding: 20px;
@@ -104,10 +100,9 @@
         }
 
         .kb-item.new {
-            color: #e74c3c; /* New KB items in red */
+            color: #e74c3c; 
         }
 
-        /* Resolution Section */
         #resolutionContainer {
             width: 45%;
             padding: 20px;
@@ -145,7 +140,6 @@
             background-color: #e67e22;
         }
 
-        /* Result Box */
         .result-box {
             background: #ffffff;
             padding: 20px;
@@ -169,7 +163,6 @@
         }
 
         @media (max-width: 768px) {
-            /* Stack everything vertically on smaller screens */
             .container {
                 flex-direction: column;
                 align-items: center;
@@ -195,7 +188,6 @@
     <div id="mainContent">
         <div id="stepsContainer"></div>
 
-        <!-- Knowledge Base and Resolution sections will be added dynamically -->
         <div class="container" style="display:none;" id="kbAndResolutionContainer">
             <div id="kbContainer"></div>
             <div id="resolutionContainer"></div>
@@ -209,7 +201,6 @@
             e.preventDefault();
             let statement = document.getElementById('statement').value;
 
-            // Hide the form to prevent multiple submissions
             document.getElementById('proofForm').style.display = 'none';
 
             fetch('/proof', {
@@ -221,7 +212,6 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Clear previous content if any
                 let stepsContainer = document.getElementById('stepsContainer');
                 let kbContainer = document.getElementById('kbContainer');
                 let resolutionContainer = document.getElementById('resolutionContainer');
@@ -233,24 +223,20 @@
                 let steps = data.steps;
                 let descriptions = data.descriptions;
                 let unify = data.unify;
-                let initial_kb = data.initial_kb; // Initial knowledge base
-                let kb = data.kb; // List of knowledge bases at each step
-                let error = data.error; // Error flag
+                let initial_kb = data.initial_kb;
+                let kb = data.kb; 
+                let error = data.error;
 
-                // Handle error case
                 if (error) {
-                    // Show error message in preprocessing section
                     let errorMessage = document.createElement('div');
                     errorMessage.classList.add('error-message');
-                    errorMessage.textContent = "An error occurred while processing your logic statement.";
+                    errorMessage.textContent = "An error occurred. This is either due to a malformed logic statement or a timeout.";
                     stepsContainer.appendChild(errorMessage);
 
-                    // Hide the knowledge base and resolution sections
                     kbAndResolutionContainer.style.display = 'none';
-                    return; // Don't proceed further if there's an error
+                    return; 
                 }
 
-                // Show Preprocessing Steps
                 let header = document.createElement('div');
                 header.classList.add('preprocessing-header');
                 header.textContent = 'Preprocessing';
@@ -277,10 +263,8 @@
                     stepsContainer.appendChild(stepElement);
                 });
 
-                // Once preprocessing is done, show KB and Resolution containers
-                kbAndResolutionContainer.style.display = 'flex'; // Make KB and Resolution visible
+                kbAndResolutionContainer.style.display = 'flex'; 
 
-                // Initial Knowledge Base Section
                 initial_kb.forEach(item => {
                     let kbItem = document.createElement('div');
                     kbItem.classList.add('kb-item');
@@ -288,7 +272,6 @@
                     kbContainer.appendChild(kbItem);
                 });
 
-                // Resolution Section
                 let resolutionHeader = document.createElement('div');
                 resolutionHeader.classList.add('preprocessing-header');
                 resolutionHeader.textContent = 'Resolution';
@@ -301,7 +284,6 @@
 
                 nextStepButton.addEventListener('click', function() {
                     if (currentStepIndex < unify.length) {
-                        // Add resolution step
                         let stepElement = document.createElement('div');
                         stepElement.classList.add('step');
                         let stepExpression = document.createElement('div');
@@ -310,7 +292,6 @@
                         stepElement.appendChild(stepExpression);
                         resolutionContainer.appendChild(stepElement);
 
-                        // Update Knowledge Base
                         let kbItem = document.createElement('div');
                         kbItem.classList.add('kb-item', 'new');
                         kbItem.textContent = kb[currentStepIndex];
@@ -321,11 +302,10 @@
                         nextStepButton.disabled = true;
                         nextStepButton.textContent = 'No more steps';
 
-                        // Once all steps are shown, display result box
                         let resultBox = document.createElement('div');
                         resultBox.classList.add('result-box');
-                        let validityText = data.valid ? 'Valid' : 'Not Valid';
-                        resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">Statement is ${validityText}</p>`;
+                        let validityText = data.valid ? 'Contradiction found, statement is valid!' : 'Cannot take another step, statement is invalid.';
+                        resultBox.innerHTML = `<p class="result-${data.valid ? 'valid' : 'invalid'}">${validityText}</p>`;
                         document.getElementById('visualization').appendChild(resultBox);
                     }
                 });
