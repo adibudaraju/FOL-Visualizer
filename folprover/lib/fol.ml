@@ -19,6 +19,24 @@ type clause = literal list
 
 exception InvalidForm of string
 
+let uniq = List.fold_left (fun u x -> if List.mem x u then u else x :: u) []
+
+let rec freevarsT = function
+  | Var x -> [ x ]
+  | Fun (_, ts) -> List.concat_map freevarsT ts |> uniq
+
+let rec freevarsF = function
+  | Rel (_, ts) -> List.concat_map freevarsT ts |> uniq
+  | Not f -> freevarsF f
+  | Cv (_, f1, f2) -> freevarsF f1 @ freevarsF f2 |> uniq
+  | Qf (_, x, f) -> freevarsF f |> List.filter (( <> ) x)
+
+let freevarsL l = List.concat_map freevarsT l.tms |> uniq
+let freevarsC (c : clause) = List.concat_map freevarsL c |> uniq
+
+let remove_free f =
+  List.fold_left (fun f x -> Qf (Exists, x, f)) f (freevarsF f)
+
 let rec nnf = function
   | Cv (c, f1, f2) -> Cv (c, nnf f1, nnf f2)
   | Qf (q, x, f) -> Qf (q, x, nnf f)
@@ -51,14 +69,6 @@ let rec subst x t = function
 
 let substL x t l = { l with tms = List.map (substT x t) l.tms }
 let substC x t c = List.map (substL x t) c
-let uniq = List.fold_left (fun u x -> if List.mem x u then u else x :: u) []
-
-let rec freevarsT = function
-  | Var x -> [ x ]
-  | Fun (_, ts) -> List.concat_map freevarsT ts |> uniq
-
-let freevarsL l = List.concat_map freevarsT l.tms |> uniq
-let freevarsC (c : clause) = List.concat_map freevarsL c |> uniq
 
 let fresh_clause (c : clause) =
   List.fold_left (fun c x -> substC x (Var (freshVar x)) c) c (freevarsC c)

@@ -4,7 +4,7 @@ let allclauses = ref []
 
 let () =
   let lexbuf = Lexing.from_string Sys.argv.(1) in
-  let f = Parser.goal Lexer.token lexbuf in
+  let f = Parser.goal Lexer.token lexbuf |> Fol.remove_free in
   Fol.print f;
   print_newline ();
   let neg = Fol.Not f in
