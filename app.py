@@ -3,12 +3,25 @@ import os
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
-from flask_cors import CORS
-CORS(app)
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+def unicodify(arr):
+    arr_new = []
+    for a in arr:
+        b = a.replace("forall", chr(0x2200))
+        b = b.replace("exists", chr(0x2203))
+        b = b.replace("||", chr(0x2228))
+        b = b.replace("&&", chr(0x2227))
+        b = b.replace("<->", chr(0x21D4))
+        b = b.replace("->", chr(0x21D2))
+        b = b.replace("~", chr(0x00AC))
+        
+        arr_new.append(b)
+    return arr_new
 
 @app.route('/proof', methods=['POST'])
 def proof():
@@ -61,21 +74,37 @@ def proof():
             unify_steps.append(f"Resolving clauses {parts[1]}; {parts[2]} by unifying {parts[3]} and {parts[4]} with {subst}, resulting in new clause {parts[6]}")
             kb.append(parts[6])
         
-        
+    first_part = unicodify(first_part)
+    unify_steps = unicodify(unify_steps)
+    kb = unicodify(kb)
+    initial_kb = unicodify(initial_kb)
+
     return jsonify({"error": False, "valid": valid, "steps": first_part, "descriptions": descriptions, "unify": unify_steps, "summary": summary, "kb": kb, "initial_kb": initial_kb})
 
 def run_ocaml_proof_checker(statement):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     folprover_dir = os.path.join(dir_path, 'folprover')
     command = f"dune exec folprover \"{statement}\""
+
     try:
-        result = subprocess.run(command, shell=True, cwd=folprover_dir, capture_output=True, text=True)
+        result = subprocess.run(
+            command, 
+            shell=True, 
+            cwd=folprover_dir, 
+            capture_output=True, 
+            text=True, 
+            timeout=7
+        )
         if result.returncode == 0:
-            return result.stdout  # Return the command output
+            output = result.stdout
         else:
-            return f"Error: {result.stderr}"
+            output = f"Error: {result.stderr}"
+    except subprocess.TimeoutExpired:
+        output = "Error: Command timed out after 7 seconds"
     except Exception as e:
-        return f"An error occurred: {e}"
+        output = f"An error occurred: {e}"
+
+    return output
 
 if __name__ == '__main__':
     app.run(debug=True)
