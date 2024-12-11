@@ -25,28 +25,23 @@ def unicodify(arr):
 
 @app.route('/proof', methods=['POST'])
 def proof():
-    num_steps = 8
     data = request.json
     statement = data['statement']
     result = run_ocaml_proof_checker(statement).splitlines()
     result.insert(0, statement)
+
+    num_steps = 8
     if len(result) < num_steps:
-        return jsonify({"error": True})
-    print(result)
-    valid = None
-    initial_kb = result[num_steps - 1]
-    initial_kb = [a.strip() for a in initial_kb.split(";")]
-    initial_kb.insert(0, "Knowledge Base:")
-    kb = []
-    if("invalid" in result[-1]):
-        valid = False
-    else:
-        valid = True
-    summary = result[-1]
+        if result[1] == "timeout":
+            return jsonify({"error": True, "msg": "Our algorithm timed out while evaluating your statement. This means it likely got stuck resolving an unhelpful chain - your statement's validity could not be determined."})
+        else:
+            return jsonify({"error": True, "msg": "There was an error parsing your logic statement."})
+    
+    
     first_part = result[0:num_steps]
     descriptions = [
         "Initial Statement: ",
-        "Step 0: Convert all implications",
+        "Step 0: Convert all implications and remove free vars",
         "Step 1: Negate the statement",
         "Step 2: Convert to Negation Normal Form",
         "Step 3: Convert to Prenex Normal Form",
@@ -54,10 +49,21 @@ def proof():
         "Step 5: Convert to Clausal Normal Form",
         "Step 6: Drop quantifiers and list out the clauses"
     ]
-    unify = result[num_steps:-1]
+    
+    initial_kb = result[num_steps - 1]
+    initial_kb = [a.strip() for a in initial_kb.split(";")]
+    initial_kb.insert(0, "Knowledge Base:")
 
+    valid = None
+    if("invalid" in result[-1]):
+        valid = False
+    else:
+        valid = True
+
+    summary = result[-1]
+    unify = result[num_steps:-1]
     unify_steps = []
-    cur_kb = None
+    kb = []
     for stmt in unify:
         parts = stmt.split(";")
         parts = [a.strip() for a in parts]
@@ -79,7 +85,7 @@ def proof():
     kb = unicodify(kb)
     initial_kb = unicodify(initial_kb)
 
-    return jsonify({"error": False, "valid": valid, "steps": first_part, "descriptions": descriptions, "unify": unify_steps, "summary": summary, "kb": kb, "initial_kb": initial_kb})
+    return jsonify({"error": False, "msg": "bruh", "valid": valid, "steps": first_part, "descriptions": descriptions, "unify": unify_steps, "summary": summary, "kb": kb, "initial_kb": initial_kb})
 
 def run_ocaml_proof_checker(statement):
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -100,7 +106,7 @@ def run_ocaml_proof_checker(statement):
         else:
             output = f"Error: {result.stderr}"
     except subprocess.TimeoutExpired:
-        output = "Error: Command timed out after 7 seconds"
+        return "timeout"
     except Exception as e:
         output = f"An error occurred: {e}"
 

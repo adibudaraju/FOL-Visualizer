@@ -80,47 +80,47 @@
         .container {
             display: flex;
             justify-content: space-between;
-            gap: 30px;
+            gap: 20px;
             margin-top: 30px;
         }
-
+        
         #kbContainer {
-            width: 45%;
+            width: 40%; 
             padding: 20px;
             background-color: #ffffff;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             border-radius: 12px;
-            font-size: 1.2rem;
+            font-size: 1.7rem;
             max-height: 70vh;
             overflow-y: auto;
         }
-
+        
         .kb-item {
             margin-bottom: 15px;
         }
-
+        
         .kb-item.new {
             color: #e74c3c; 
         }
-
+        
         #resolutionContainer {
-            width: 45%;
+            width: 55%; 
             padding: 20px;
             background-color: #ffffff;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             border-radius: 12px;
         }
-
+        
         .step {
             font-size: 1.5rem;
             margin-bottom: 20px;
         }
-
+        
         .step-expression {
             font-size: 1.5rem;
             font-weight: bold;
         }
-
+        
         .next-step-button {
             background-color: #f39c12;
             color: white;
@@ -135,11 +135,11 @@
             text-align: center;
             margin: 10px auto;
         }
-
+        
         .next-step-button:hover {
             background-color: #e67e22;
         }
-
+        
         .result-box {
             background: #ffffff;
             padding: 20px;
@@ -151,28 +151,29 @@
             margin: 20px auto;
             text-align: center;
         }
-
+        
         .result-valid {
             color: #28a745;
             font-weight: 600;
         }
-
+        
         .result-invalid {
             color: #dc3545;
             font-weight: 600;
         }
-
+        
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
                 align-items: center;
             }
-
+        
             #kbContainer, #resolutionContainer {
                 width: 90%;
                 margin-bottom: 20px;
             }
         }
+        
     </style>
 </head>
 <body>
@@ -180,7 +181,7 @@
     <h1>Logic Proof Visualizer</h1>
 
     <form id="proofForm">
-        <label for="statement">Enter your logic statement:</label>
+        <label for="statement">Enter your logic sentence:</label>
         <input type="text" id="statement" name="statement" placeholder="e.g., A() -> B()" required>
         <button type="submit">Submit</button>
     </form>
@@ -226,11 +227,12 @@
                 let initial_kb = data.initial_kb;
                 let kb = data.kb; 
                 let error = data.error;
+                let msg = data.msg;
 
                 if (error) {
                     let errorMessage = document.createElement('div');
                     errorMessage.classList.add('error-message');
-                    errorMessage.textContent = "An error occurred. This is either due to a malformed logic statement or a timeout.";
+                    errorMessage.textContent = msg;
                     stepsContainer.appendChild(errorMessage);
 
                     kbAndResolutionContainer.style.display = 'none';
